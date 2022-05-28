@@ -1,5 +1,5 @@
 # quickPaste
-Designed to quickly operations like paste among mac/win/Linux.
+Designed to quickly operations like paste among mac/win/Linux. It is supported to share your clipboard among PCs
 
 # Usage
 
