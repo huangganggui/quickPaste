@@ -4,7 +4,6 @@ import { Command } from 'commander';
 import { Server } from "socket.io";
 import { io } from "socket.io-client";
 import { networkInterfaces } from 'os';
-import ip from 'ip';
 
 const contentChange = new events.EventEmitter();
 const program = new Command()
