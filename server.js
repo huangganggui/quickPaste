@@ -10,11 +10,17 @@ contentChange.on("newContent", function(data){
 
 setInterval(function(){
     // console.log("this is console.log");
-    var content = clipboardy.readSync();
+    try {
+        var content = clipboardy.readSync();
+    } catch (error) {
+        // console.log(error);
+    }
+
     if (content) {
         if (oldContent !== content) {
             contentChange.emit("newContent", content)
             oldContent = content
         }
     }
-},100);
+
+},1000);
