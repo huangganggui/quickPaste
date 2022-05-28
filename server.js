@@ -8,7 +8,7 @@ import { io } from "socket.io-client";
 const contentChange = new events.EventEmitter();
 const program = new Command()
 const _PORT = 5555
-var oldContent = '';
+var oldContent = '';  // TODO: global var not safe, change it
 
 
 program
@@ -16,14 +16,22 @@ program
   .description('Share your clipboard to other PC')
   .version('0.0.0')
   .option('--ip <char>', 'Connect to other PC to share clipboard');
-program.parse();
+program.parse(); 
 
-contentChange.on("newContent", function(data){
-    console.log(data);
-}); 
+function listenEvent(socket, ) {
+    socket.on("clipboardNewContent", data => {
+        oldContent = data;  // TODO: not safe here
+        clipboardy.writeSync(data);
+        // console.log(" content has been write to clipboard:", data)
+
+    });
+
+    contentChange.on("EventClipboardNewContent", function(data){
+        socket.emit("clipboardNewContent", data);
+    });
+}
 
 setInterval(function(){
-    // console.log("this is console.log");
     try {
         var content = clipboardy.readSync();
     } catch (error) {
@@ -31,8 +39,8 @@ setInterval(function(){
     }
 
     if (content) {
-        if (oldContent !== content) {
-            contentChange.emit("newContent", content)
+        if (oldContent !== content) {  // TODO: not safe here
+            contentChange.emit("EventClipboardNewContent", content)
             oldContent = content
         }
     }
@@ -41,26 +49,14 @@ setInterval(function(){
 if (program.opts().ip) {
     console.log("This is a client")
     const socket = io(`ws://${program.opts().ip}:${_PORT}`);
-
-    // send a message to the server
-    socket.emit("hello from client", 5, "6", { 7: Uint8Array.from([8]) });
-
-    // receive a message from the server
-    socket.on("hello from server", (...args) => {
-    // ...
-    });
+    listenEvent(socket)
 
 } else {
     console.log("this is server")
     const io = new Server(_PORT);
 
     io.on("connection", (socket) => {
-      // send a message to the client
-      socket.emit("hello from server", 1, "2", { 3: Buffer.from([4]) });
-
-      // receive a message from the client
-      socket.on("hello from client", (...args) => {
-        // ...
-      });
+        console.log("connected");
+        listenEvent(socket);
     });
 }
