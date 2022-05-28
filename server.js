@@ -1,9 +1,10 @@
 import clipboardy from 'clipboardy';
 import events from 'events';
 import { Command } from 'commander';
-
 import { Server } from "socket.io";
 import { io } from "socket.io-client";
+import { networkInterfaces } from 'os';
+import ip from 'ip';
 
 const contentChange = new events.EventEmitter();
 const program = new Command()
@@ -31,6 +32,21 @@ function listenEvent(socket, ) {
     });
 }
 
+function getLocalIPs(){
+    const nets = networkInterfaces();
+    const results = [];
+
+    for (const name of Object.keys(nets)) {
+        for (const net of nets[name]) {
+            // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+            if (net.family === 'IPv4' && !net.internal) {
+                results.push(net.address);
+            }
+        }
+    }
+    return results;
+}
+
 setInterval(function(){
     try {
         var content = clipboardy.readSync();
@@ -52,7 +68,8 @@ if (program.opts().ip) {
     listenEvent(socket)
 
 } else {
-    console.log("this is server")
+
+    console.log("This is server, IP is:", getLocalIPs())
     const io = new Server(_PORT);
 
     io.on("connection", (socket) => {
