@@ -1,0 +1,9 @@
+{
+  "name": "quickPaste",
+  "version": "2.1.24",
+  "type": "module",
+  "dependencies": {
+    "clipboardy": "3.0.0"
+  },
+  "devDependencies": {}
+}
