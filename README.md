@@ -13,3 +13,11 @@ node ./server.js
 npm install
 node ./server.js --ip xxx.xxx.xxx.xxx # ip will log on server
 ```
+
+# TODO list
+* support more client (just one now)
+* support image (just string now)
+* support file paste (just string now)
+* support UI for config server or client
+* create installer for windows/mac/linux
+* support mouse and keyboard share
