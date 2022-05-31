@@ -15,7 +15,7 @@ node ./server.js --ip xxx.xxx.xxx.xxx # ip will log on server
 ```
 
 # TODO list
-* support more clients (just one now)
+* ~~support more clients (ust one now)~~
 * support images (just string now)
 * support files/folders paste (just string now)
 * support UI for config server or client
