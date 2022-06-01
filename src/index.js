@@ -5,6 +5,51 @@ import { Server } from "socket.io";
 import { io } from "socket.io-client";
 import { networkInterfaces } from 'os';
 
+import { QMainWindow, QWidget, QLabel, FlexLayout, QPushButton, QIcon } from '@nodegui/nodegui';
+import logo from '../assets/logo.svg';
+
+const win = new QMainWindow();
+win.setWindowTitle("Hello World");
+
+const centralWidget = new QWidget();
+centralWidget.setObjectName("myroot");
+const rootLayout = new FlexLayout();
+centralWidget.setLayout(rootLayout);
+
+const label = new QLabel();
+label.setObjectName("mylabel");
+label.setText("Hello");
+
+const button = new QPushButton();
+button.setIcon(new QIcon(logo));
+
+const label2 = new QLabel();
+label2.setText("World");
+label2.setInlineStyle(`
+  color: red;
+`);
+
+rootLayout.addWidget(label);
+rootLayout.addWidget(button);
+rootLayout.addWidget(label2);
+win.setCentralWidget(centralWidget);
+win.setStyleSheet(
+  `
+    #myroot {
+      background-color: #009688;
+      height: '100%';
+      align-items: 'center';
+      justify-content: 'center';
+    }
+    #mylabel {
+      font-size: 16px;
+      font-weight: bold;
+      padding: 1;
+    }
+  `
+);
+win.show();
+
 const contentChange = new events.EventEmitter();
 const program = new Command()
 const _PORT = 5555
