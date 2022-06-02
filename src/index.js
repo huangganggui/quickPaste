@@ -5,17 +5,20 @@ import { Server } from "socket.io";
 import { io } from "socket.io-client";
 import { networkInterfaces } from 'os';
 
-import { QMainWindow, QWidget, QLabel, FlexLayout, QPushButton, QIcon } from '@nodegui/nodegui';
+import { QMainWindow, QWidget, QLabel, FlexLayout, QPushButton, QIcon, QRadioButton } from '@nodegui/nodegui';
 import logo from '../assets/logo.svg';
 
+// window
 const win = new QMainWindow();
 win.setWindowTitle("Hello World");
 
+//layout
 const centralWidget = new QWidget();
 centralWidget.setObjectName("myroot");
 const rootLayout = new FlexLayout();
 centralWidget.setLayout(rootLayout);
 
+// widget
 const label = new QLabel();
 label.setObjectName("mylabel");
 label.setText("Hello");
@@ -29,9 +32,17 @@ label2.setInlineStyle(`
   color: red;
 `);
 
+const  radioButtonClient = new QRadioButton();
+radioButtonClient.setText("This is Client");
+
+const  radioButtonServer = new QRadioButton();
+radioButtonServer.setText("This is Server");
+
 rootLayout.addWidget(label);
 rootLayout.addWidget(button);
 rootLayout.addWidget(label2);
+rootLayout.addWidget(radioButtonClient);
+rootLayout.addWidget(radioButtonServer);
 win.setCentralWidget(centralWidget);
 win.setStyleSheet(
   `
