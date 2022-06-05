@@ -84,6 +84,27 @@ win.setStyleSheet(
     }
   `
 );
+// UI event
+function setUiMode(isServer) {
+    //widget
+    labelClientLableInputIpReminder.setEnabled(!isServer);
+    inputClientIp.setEnabled(!isServer);
+    buttonClientConnect.setEnabled(!isServer);
+    
+    //server widget
+    labelServerIpReminder.setEnabled(isServer);
+    labelClientLableIpShow.setEnabled(isServer);
+    buttonServerStart.setEnabled(isServer);
+}
+
+radioButtonClient.addEventListener('clicked',(checked)=>{
+    setUiMode(false)
+});
+radioButtonServer.addEventListener('clicked',(checked)=>{
+    setUiMode(true)
+});
+
+setUiMode(false)
 win.show();
 
 const contentChange = new events.EventEmitter();
