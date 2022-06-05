@@ -3,15 +3,17 @@ Designed to quickly operations like paste among mac/win/Linux. It is supported t
 
 # Usage
 
-## Choose a PC as server
+If you encounter errors installing nodegui, please check [nodegui FAQs](https://docs.nodegui.org/docs/faq#why-does-installation-fail-at-minimal-qt-setup).
+
+## Choose One of PCs as server
 ```
 npm install
-node ./server.js
+npm start
 ```
-## choose a PC as client
+## Choose One of PCs as client
 ```
 npm install
-node ./server.js --ip xxx.xxx.xxx.xxx # ip will log on server
+npm start --ip xxx.xxx.xxx.xxx # ip will log on server
 ```
 
 # TODO list
@@ -21,3 +23,16 @@ node ./server.js --ip xxx.xxx.xxx.xxx # ip will log on server
 * support UI for config server or client
 * create installer for windows/mac/linux
 * support mouse and keyboard share
+
+---
+# For developers
+## build the apps
+* Step 1: (Run this command only once)
+```
+npx nodegui-packer --init quickPaste
+```
+* Step 2: (Run this command every time you want to build a new distributable)
+```
+npm run build
+npx nodegui-packer --pack ./dist
+```
