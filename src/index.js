@@ -211,8 +211,8 @@ function serverStart(callback) {
     }, 1000);
 
     localEvent.once(LOCAL_EVENT_STOPSIO, ()=>{
-        localEvent.removeEventListener(clipboardChecker)
-        console.log('get event LOCAL_EVENT_STOPSIO')
+        clearInterval(clipboardChecker)
+        // console.log('get event LOCAL_EVENT_STOPSIO')
         io.disconnectSockets()
         io.close()
     });
