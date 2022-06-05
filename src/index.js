@@ -5,7 +5,7 @@ import { Server } from "socket.io";
 import { io } from "socket.io-client";
 import { networkInterfaces } from 'os';
 
-import { QMainWindow, QWidget, QLabel, FlexLayout, QPushButton, QIcon, QRadioButton } from '@nodegui/nodegui';
+import { QMainWindow, QWidget, QLabel, QPushButton, QIcon, QRadioButton, QLineEdit, QBoxLayout } from '@nodegui/nodegui';
 import logo from '../assets/logo.svg';
 
 // window
@@ -15,40 +15,65 @@ win.setWindowTitle("Hello World");
 //layout
 const centralWidget = new QWidget();
 centralWidget.setObjectName("myroot");
-const rootLayout = new FlexLayout();
+// centralWidget.setLayout(rootLayout);
+
+const rootLayout = new QBoxLayout(2);
 centralWidget.setLayout(rootLayout);
 
+const ClientLayout = new QBoxLayout(2);
+ClientLayout.addSpacing(5)
+const ServerLayout = new QBoxLayout(2);
+const logLayout = new QBoxLayout(2);
+
+
+rootLayout.addLayout(ClientLayout);
+rootLayout.addLayout(ServerLayout);
+rootLayout.addLayout(logLayout);
+
+
 // widget
-const label = new QLabel();
-label.setObjectName("mylabel");
-label.setText("Hello");
-
-const button = new QPushButton();
-button.setIcon(new QIcon(logo));
-
-const label2 = new QLabel();
-label2.setText("World");
-label2.setInlineStyle(`
-  color: red;
-`);
-
+// client
 const  radioButtonClient = new QRadioButton();
-radioButtonClient.setText("This is Client");
+radioButtonClient.click() // default as client
+radioButtonClient.setText("As Client");
 
+const labelClientLableInputIpReminder = new QLabel();
+labelClientLableInputIpReminder.setText("Input server IP:");
+
+const inputClientIp = new QLineEdit();
+
+const buttonClientConnect = new QPushButton();
+buttonClientConnect.setText("connect") // or disconnect
+
+ClientLayout.addWidget(radioButtonClient);
+ClientLayout.addWidget(labelClientLableInputIpReminder);
+ClientLayout.addWidget(inputClientIp);
+ClientLayout.addWidget(buttonClientConnect);
+
+// server
 const  radioButtonServer = new QRadioButton();
-radioButtonServer.setText("This is Server");
+radioButtonServer.setText("As Server");
 
-rootLayout.addWidget(label);
-rootLayout.addWidget(button);
-rootLayout.addWidget(label2);
-rootLayout.addWidget(radioButtonClient);
-rootLayout.addWidget(radioButtonServer);
+const labelServerIpReminder = new QLabel();
+labelServerIpReminder.setText("Server IP:");
+
+const labelClientLableIpShow = new QLabel();
+
+const buttonServerStart = new QPushButton();
+buttonServerStart.setText("start") // or disconnect
+
+ServerLayout.addWidget(radioButtonServer);
+ServerLayout.addWidget(labelServerIpReminder);
+ServerLayout.addWidget(labelClientLableIpShow);
+ServerLayout.addWidget(buttonServerStart);
+
 win.setCentralWidget(centralWidget);
 win.setStyleSheet(
   `
     #myroot {
-      background-color: #009688;
-      height: '100%';
+      background-color: #19c287;
+      min-height: '100';
+      min-width: '100';
       align-items: 'center';
       justify-content: 'center';
     }
