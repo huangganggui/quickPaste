@@ -20,7 +20,7 @@ npm start --ip xxx.xxx.xxx.xxx # ip will log on server
 * ~~support more clients (ust one now)~~
 * support images (just string now)
 * support files/folders paste (just string now)
-* support UI for config server or client
+* ~~support UI for config server or client~~
 * create installer for windows/mac/linux
 * support mouse and keyboard share
 
