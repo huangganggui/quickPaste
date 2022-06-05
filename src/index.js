@@ -240,11 +240,10 @@ function serverStart(callback) {
 
 // button state not safe, TODO: fix it
 buttonClientConnect.addEventListener('clicked',(checked)=>{
-    console.log(buttonClientConnect.text());
+    // console.log(buttonClientConnect.text());
     if (buttonClientConnect.text() === 'connect') {
         buttonClientConnect.setText("connecting")
         clientStart(inputClientIp.text(), ()=>{
-            console('this is client callback')
             buttonClientConnect.setText("disconnect")
         });
     } else if (buttonClientConnect.text() === 'disconnect' || buttonClientConnect.text() === "connecting") {
