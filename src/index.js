@@ -8,6 +8,14 @@ import { networkInterfaces } from 'os';
 import { QMainWindow, QWidget, QLabel, QPushButton, QIcon, QRadioButton, QLineEdit, QBoxLayout } from '@nodegui/nodegui';
 import logo from '../assets/logo.svg';
 
+const localEvent = new events.EventEmitter();
+const program = new Command()
+const _PORT = 5555
+var oldContent = '';  // TODO: global var not safe, change it
+const SIO_EVENT_CLIPBOARD_NEW_CONTENT = "SIOEventClipboardNewContent"
+const LOCAL_EVENT_CLIPBOARD_NEW_CONTENT = "LocalEventClipboardNewContent"
+const LOCAL_EVENT_STOPSIO = "LocalEventStopSio"
+
 // window
 const win = new QMainWindow();
 win.setWindowTitle("Hello World");
@@ -89,30 +97,31 @@ function setUiMode(isServer) {
     //widget
     labelClientLableInputIpReminder.setEnabled(!isServer);
     inputClientIp.setEnabled(!isServer);
+    buttonClientConnect.setText('connect')
     buttonClientConnect.setEnabled(!isServer);
     
     //server widget
     labelServerIpReminder.setEnabled(isServer);
     labelClientLableIpShow.setEnabled(isServer);
+    labelServerIpReminder.setText('Server IP is:'+isServer?getLocalIPs():'');
+    buttonServerStart.setText('start')
     buttonServerStart.setEnabled(isServer);
 }
 
+// used as client
 radioButtonClient.addEventListener('clicked',(checked)=>{
-    setUiMode(false)
+    localEvent.emit(LOCAL_EVENT_STOPSIO)
+    setUiMode(false);
 });
+
+//used as server
 radioButtonServer.addEventListener('clicked',(checked)=>{
-    setUiMode(true)
+    localEvent.emit(LOCAL_EVENT_STOPSIO)
+    setUiMode(true);
 });
 
 setUiMode(false)
 win.show();
-
-const contentChange = new events.EventEmitter();
-const program = new Command()
-const _PORT = 5555
-var oldContent = '';  // TODO: global var not safe, change it
-const SIO_EVENT_CLIPBOARD_NEW_CONTENT = "SIOEventClipboardNewContent"
-const LOCAL_EVENT_CLIPBOARD_NEW_CONTENT = "LocalEventClipboardNewContent"
 
 program
   .name('Quick Paste')
@@ -120,22 +129,6 @@ program
   .version('0.0.0')
   .option('--ip <char>', 'Connect to other PC to share clipboard');
 program.parse(); 
-
-function listenEvent(socket, role) {
-    socket.on(SIO_EVENT_CLIPBOARD_NEW_CONTENT, data => {
-        oldContent = data;  // TODO: not safe here
-        clipboardy.writeSync(data);
-        // console.log(" content has been write to clipboard:", data)
-        if (role === "server") {
-            // send message to all clients except sender
-            socket.broadcast.emit("SIO_EVENT_CLIPBOARD_NEW_CONTENT", data)
-        }
-    });
-
-    contentChange.on(LOCAL_EVENT_CLIPBOARD_NEW_CONTENT, function(data){
-        socket.emit(SIO_EVENT_CLIPBOARD_NEW_CONTENT, data);
-    });
-}
 
 function getLocalIPs(){
     const nets = networkInterfaces();
@@ -149,36 +142,131 @@ function getLocalIPs(){
             }
         }
     }
-    return results;
+    return results.toString();
 }
 
-setInterval(function(){
-    try {
-        var content = clipboardy.readSync();
-    } catch (error) {
-        // console.log(error);
-    }
+function clientStart(ip, callback) {
+    console.log('connecting');
+    const socket = io(`ws://${ip}:${_PORT}`);
+    var clipboardChecker = null
+    
+    localEvent.once(LOCAL_EVENT_STOPSIO, ()=>{
+        if (clipboardChecker) clearInterval(clipboardChecker);
 
-    if (content) {
-        if (oldContent !== content) {  // TODO: not safe here
-            contentChange.emit(LOCAL_EVENT_CLIPBOARD_NEW_CONTENT, content)
-            oldContent = content
+        if (socket.connected){
+            socket.disconnect();
+            console.log("sio disconnected");
         }
-    }
-},1000);
+        socket.close();
+    })
 
-if (program.opts().ip) {
-    console.log("This is a client")
-    const socket = io(`ws://${program.opts().ip}:${_PORT}`);
-    listenEvent(socket, "client")
+    socket.on('connect', ()=>{
+        console.log("connect to server success");
+        // client connected ,start monitor and transfer
+        // start monitor clipboard
+        oldContent = clipboardy.readSync();
+        clipboardChecker = setInterval(()=>{
+            try {
+                var content = clipboardy.readSync();
+            } catch (error) {
+                // console.log(error);
+            }
+        
+            if (content) {
+                if (oldContent !== content) {  // TODO: not safe here
+                    socket.emit(SIO_EVENT_CLIPBOARD_NEW_CONTENT, content);
+                    oldContent = content;
+                }
+            }
+        }, 1000);
+        callback()
+    });
+    socket.on(SIO_EVENT_CLIPBOARD_NEW_CONTENT, data => {
+        oldContent = data;  // TODO: not safe here
+        clipboardy.writeSync(data);
+        console.log(" content has been write to clipboard:", data)
+    });
+    socket.on("disconnect", data => {
 
-} else {
+    });
+}
 
-    console.log("This is server, IP is:", getLocalIPs())
-    const io = new Server(_PORT);
+function serverStart(callback) {
+
+    console.log("server starting")
+    const io = new Server({});
+    // oldContent = clipboardy.readSync();
+    // const clipboardChecker = setInterval(()=>{
+    //     try {
+    //         var content = clipboardy.readSync();
+    //     } catch (error) {
+    //         // console.log(error);
+    //     }
+    
+    //     if (content) {
+    //         if (oldContent !== content) {  // TODO: not safe here
+    //             io.emit(SIO_EVENT_CLIPBOARD_NEW_CONTENT, content);
+    //             oldContent = content;
+    //         }
+    //     }
+    // }, 1000);
+
+    // localEvent.once(LOCAL_EVENT_STOPSIO, ()=>{
+    //     localEvent.removeEventListener(clipboardChecker)
+    //     console.log('get event LOCAL_EVENT_STOPSIO')
+    //     io.disconnectSockets()
+    //     io.close()
+    // });
 
     io.on("connection", (socket) => {
         console.log("connected");
-        listenEvent(socket, "server");
+        // // listen clients message
+        // socket.on('connect', ()=>{
+        //     console.log("a client connected to this server");
+        //     // client connected ,start monitor and transfer
+        //     callback()
+        // });
+
+        // socket.on(SIO_EVENT_CLIPBOARD_NEW_CONTENT, data => {
+        //     oldContent = data;  // TODO: not safe here
+        //     clipboardy.writeSync(data);
+        //     socket.broadcast.emit()
+        // });
+    
+        // socket.on("disconnect", ()=>{
+        // });
+    });
+
+    io.listen(_PORT, ()=>{
+        console.log("server listening ...")
+        callback()
     });
 }
+
+// button state not safe, TODO: fix it
+buttonClientConnect.addEventListener('clicked',(checked)=>{
+    console.log(buttonClientConnect.text());
+    if (buttonClientConnect.text() === 'connect') {
+        buttonClientConnect.setText("connecting")
+        clientStart(inputClientIp.text(), ()=>{
+            console('this is client callback')
+            buttonClientConnect.setText("disconnect")
+        });
+    } else if (buttonClientConnect.text() === 'disconnect' || buttonClientConnect.text() === "connecting") {
+        console.log('disconnecting');
+        localEvent.emit(LOCAL_EVENT_STOPSIO)
+        buttonClientConnect.setText('connect')
+    }
+});
+
+buttonServerStart.addEventListener('clicked', ()=>{
+    if (buttonServerStart.text() === 'start') {
+        buttonServerStart.setText("starting")
+        serverStart(()=>{
+            buttonServerStart.setText("stop")
+        });
+    } else if (buttonServerStart.text() === 'stop' || buttonServerStart.text() === "starting") {
+        localEvent.emit(LOCAL_EVENT_STOPSIO)
+        buttonServerStart.setText('start')
+    }
+})
