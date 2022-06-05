@@ -193,54 +193,49 @@ function clientStart(ip, callback) {
 
 function serverStart(callback) {
 
-    console.log("server starting")
-    const io = new Server({});
-    // oldContent = clipboardy.readSync();
-    // const clipboardChecker = setInterval(()=>{
-    //     try {
-    //         var content = clipboardy.readSync();
-    //     } catch (error) {
-    //         // console.log(error);
-    //     }
+    const io = new Server(_PORT);
+    oldContent = clipboardy.readSync();
+    const clipboardChecker = setInterval(()=>{
+        try {
+            var content = clipboardy.readSync();
+        } catch (error) {
+            // console.log(error);
+        }
     
-    //     if (content) {
-    //         if (oldContent !== content) {  // TODO: not safe here
-    //             io.emit(SIO_EVENT_CLIPBOARD_NEW_CONTENT, content);
-    //             oldContent = content;
-    //         }
-    //     }
-    // }, 1000);
+        if (content) {
+            if (oldContent !== content) {  // TODO: not safe here
+                io.emit(SIO_EVENT_CLIPBOARD_NEW_CONTENT, content);
+                oldContent = content;
+            }
+        }
+    }, 1000);
 
-    // localEvent.once(LOCAL_EVENT_STOPSIO, ()=>{
-    //     localEvent.removeEventListener(clipboardChecker)
-    //     console.log('get event LOCAL_EVENT_STOPSIO')
-    //     io.disconnectSockets()
-    //     io.close()
-    // });
+    localEvent.once(LOCAL_EVENT_STOPSIO, ()=>{
+        localEvent.removeEventListener(clipboardChecker)
+        console.log('get event LOCAL_EVENT_STOPSIO')
+        io.disconnectSockets()
+        io.close()
+    });
 
     io.on("connection", (socket) => {
         console.log("connected");
-        // // listen clients message
-        // socket.on('connect', ()=>{
-        //     console.log("a client connected to this server");
-        //     // client connected ,start monitor and transfer
-        //     callback()
-        // });
+        // listen clients message
+        socket.on('connect', ()=>{
+            console.log("a client connected to this server");
+            // client connected ,start monitor and transfer
+            callback()
+        });
 
-        // socket.on(SIO_EVENT_CLIPBOARD_NEW_CONTENT, data => {
-        //     oldContent = data;  // TODO: not safe here
-        //     clipboardy.writeSync(data);
-        //     socket.broadcast.emit()
-        // });
+        socket.on(SIO_EVENT_CLIPBOARD_NEW_CONTENT, data => {
+            oldContent = data;  // TODO: not safe here
+            clipboardy.writeSync(data);
+            socket.broadcast.emit()
+        });
     
-        // socket.on("disconnect", ()=>{
-        // });
+        socket.on("disconnect", ()=>{
+        });
     });
-
-    io.listen(_PORT, ()=>{
-        console.log("server listening ...")
-        callback()
-    });
+    callback()
 }
 
 // button state not safe, TODO: fix it
