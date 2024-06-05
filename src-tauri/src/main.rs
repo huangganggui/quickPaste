@@ -52,17 +52,15 @@ fn listen_for_packets(socket: UdpSocket, record: Arc<Mutex<String>>) {
                 match serde_json::from_str::<UdpMessage>(&message) {
                     Ok(msg) => {
                         println!("from: {}, type: {}, content{}", msg.msg_from, msg.msg_type, msg.msg_content);
+                        let mut clipboard_content_record = record.lock().unwrap();
+                        if(format!("{}", msg.msg_content) != format!("{}", clipboard_content_record)) {
+                            clipboard_paste.set_text(msg.msg_content).unwrap();
+                        } else {
+                            println!("same content. ignore: {}", msg.msg_content);
+                        }
                     },
                     Err(e) => println!("Failed to deserialize JSON: {}", e),
                 }
-
-                // let the_string = "Hello, world!";
-                let json_map: Value = serde_json::from_str(message.trim()).unwrap();
-
-                // clipboard_paste.set_text(the_string).unwrap();
-                println!("from: {}, conent: {}", 
-                json_map.get("msg_from").unwrap().as_str().unwrap(), 
-                json_map.get("msg_content").unwrap().as_str().unwrap());
                 
             },
             Err(e) => {
@@ -89,7 +87,7 @@ fn broadcast_message(socket: &UdpSocket, content: String) {
     if let Err(e) = socket.send_to(msg_bytes, destination_addr) {
         eprintln!("Error sending packet: {}", e);
     } else {
-        println!("Broadcasted '{}' successfully!", content);
+        // println!("Broadcasted '{}' successfully!", content);
     }
 }
 
@@ -99,17 +97,18 @@ fn poll_clipboard(socket: UdpSocket, record: Arc<Mutex<String>>,) {
 
     loop {
         thread::sleep(sleep_time);
-        let clipboard_conent_new = clipboard_read.get_text().unwrap_or(String::from(""));
-        let mut clipboard_conent_record = record.lock().unwrap();
+        let clipboard_content_new = clipboard_read.get_text().unwrap_or(String::from(""));
+        let mut clipboard_content_record = record.lock().unwrap();
         
-        println!("loop...");
-        println!("clipboard text: \"{}\"", clipboard_conent_new);
-        println!("record: \"{}\"", clipboard_conent_record);
-        if (format!("{}", clipboard_conent_new)==format!("{}", clipboard_conent_record)) {
-            println!("same,  do nothing"); 
+        // println!("loop...");
+        // println!("clipboard text: \"{}\"", clipboard_content_new);
+        // println!("record: \"{}\"", clipboard_content_record);
+        if (format!("{}", clipboard_content_new)==format!("{}", clipboard_content_record)) {
+            // println!("same,  do nothing"); 
         } else {
-            *clipboard_conent_record = clipboard_conent_new.clone();
-            broadcast_message(&socket, clipboard_conent_new);
+            *clipboard_content_record = clipboard_content_new.clone();
+            println!("new conent! emit it:{}", clipboard_content_new);
+            broadcast_message(&socket, clipboard_content_new);
         }
 
     }
