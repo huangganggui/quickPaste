@@ -2654,6 +2654,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sprintf"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50e0732124cafd6bf2c9bc15f330fce49acb262beb57c877a2997898244e7f8a"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
 name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2879,6 +2888,7 @@ dependencies = [
  "arboard",
  "serde",
  "serde_json",
+ "sprintf",
  "tauri",
  "tauri-build",
 ]

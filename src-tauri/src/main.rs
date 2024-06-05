@@ -4,11 +4,23 @@
 extern crate arboard;
 
 use arboard::Clipboard;
-use serde_json::json;
+use sprintf::sprintf;
 
 use std::net::{Ipv4Addr, UdpSocket};
 use std::{thread, time};
 use std::time::Duration;
+
+use std::sync::{Mutex, Arc};
+
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+#[derive(Serialize, Deserialize)]
+struct UdpMessage {
+    msg_from: String, // mac addr or host name
+    msg_type: String,
+    msg_content: String
+}
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -22,13 +34,12 @@ fn my_custom_command() -> String {
     format!("Hello, vue")
 }
 
-const BROADCAST_MESSAGE: &str = "Broadcasting message!";
-// const BROADCAST_MESSAGE: &str = 
-const BROADCAST_PORT: u16 = 12345;
+// https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
+const BROADCAST_PORT: u16 = 28996;
 
-fn listen_for_packets(socket: UdpSocket) {
+fn listen_for_packets(socket: UdpSocket, record: Arc<Mutex<String>>) {
     // let sleep_time = time::Duration::from_millis(1000);
-
+    let mut clipboard_paste = Clipboard::new().unwrap();
     loop {
         // thread::sleep(sleep_time);
         
@@ -37,7 +48,22 @@ fn listen_for_packets(socket: UdpSocket) {
         match socket.recv_from(&mut buf) {
             Ok((num_bytes, src)) => {
                 let message = String::from_utf8_lossy(&buf[..num_bytes]);
-                println!("Received packet from {}: {}", src.ip(), message);
+
+                match serde_json::from_str::<UdpMessage>(&message) {
+                    Ok(msg) => {
+                        println!("from: {}, type: {}, content{}", msg.msg_from, msg.msg_type, msg.msg_content);
+                    },
+                    Err(e) => println!("Failed to deserialize JSON: {}", e),
+                }
+
+                // let the_string = "Hello, world!";
+                let json_map: Value = serde_json::from_str(message.trim()).unwrap();
+
+                // clipboard_paste.set_text(the_string).unwrap();
+                println!("from: {}, conent: {}", 
+                json_map.get("msg_from").unwrap().as_str().unwrap(), 
+                json_map.get("msg_content").unwrap().as_str().unwrap());
+                
             },
             Err(e) => {
                 eprintln!("Error receiving packet: {}", e);
@@ -48,56 +74,73 @@ fn listen_for_packets(socket: UdpSocket) {
     }
 }
 
-fn broadcast_message(socket: UdpSocket) {
+fn broadcast_message(socket: &UdpSocket, content: String) {
     let destination_addr = (Ipv4Addr::BROADCAST, BROADCAST_PORT);
     // let bytes_to_send = BROADCAST_MESSAGE.as_bytes();
-    let string = json!({
-        "key1": "value1",
-        "key2": 42,
-        "key3": true
-    }).to_string();
+    let msg = UdpMessage{
+        msg_from: String::from("xxx"),
+        msg_type: String::from("xxx"),
+        msg_content: content.to_string()
+    };
+    let msg_serialized = serde_json::to_string(&msg).unwrap();
 
-    let bytes_to_send = string.as_bytes();
+    let msg_bytes = msg_serialized.as_bytes();
     
-    if let Err(e) = socket.send_to(bytes_to_send, destination_addr) {
+    if let Err(e) = socket.send_to(msg_bytes, destination_addr) {
         eprintln!("Error sending packet: {}", e);
     } else {
-        println!("Broadcasted '{}' successfully!", Ipv4Addr::BROADCAST);
+        println!("Broadcasted '{}' successfully!", content);
     }
 }
 
+fn poll_clipboard(socket: UdpSocket, record: Arc<Mutex<String>>,) {
+    let mut clipboard_read = Clipboard::new().unwrap();
+    let sleep_time = time::Duration::from_millis(1000);
+
+    loop {
+        thread::sleep(sleep_time);
+        let clipboard_conent_new = clipboard_read.get_text().unwrap_or(String::from(""));
+        let mut clipboard_conent_record = record.lock().unwrap();
+        
+        println!("loop...");
+        println!("clipboard text: \"{}\"", clipboard_conent_new);
+        println!("record: \"{}\"", clipboard_conent_record);
+        if (format!("{}", clipboard_conent_new)==format!("{}", clipboard_conent_record)) {
+            println!("same,  do nothing"); 
+        } else {
+            *clipboard_conent_record = clipboard_conent_new.clone();
+            broadcast_message(&socket, clipboard_conent_new);
+        }
+
+    }
+}
 
 fn main() {
     // Bind the socket to any available port and set up broadcasting
     // sudo lsof -i:12345
-    let socket = UdpSocket::bind("0.0.0.0:12345").expect("Failed to bind UDP socket");
+    let socket = UdpSocket::bind(sprintf!("0.0.0.0:%d", BROADCAST_PORT).unwrap()).expect("Failed to bind UDP socket");
     socket.set_broadcast(true).expect("Failed to set broadcast option");
 
     // Start a thread to listen for incoming packets
     let listener_socket = socket.try_clone().expect("Failed to clone socket");
-    let handle = thread::spawn(move || {
-        listen_for_packets(listener_socket);
+
+    let mut clipboard_content_record = Arc::new(Mutex::new(String::from("")));
+
+    let record = clipboard_content_record.clone();
+    thread::spawn(move || {
+        listen_for_packets(listener_socket, record);
     });
 
-    // Give the listener thread time to start before starting to broadcast
-    std::thread::sleep(Duration::from_millis(100));
+    // Start a thread to poll clipboard
+    let record2 = clipboard_content_record.clone();
+    thread::spawn(move || {
+        poll_clipboard(socket, record2);
+    });
 
-    // Broadcast a message to all network interfaces
-    broadcast_message(socket);
-
-    // handle.join().expect("Thread panicked");
-
-    // 
-    let mut clipboard = Clipboard::new().unwrap();
-    println!("Clipboard text was: {}", clipboard.get_text().unwrap());
-
-    let the_string = "Hello, world!";
-    clipboard.set_text(the_string).unwrap();
-    println!("But now the clipboard text should be: \"{}\"", the_string);
-    
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![greet])
         .invoke_handler(tauri::generate_handler![my_custom_command])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");    
+    
 }
