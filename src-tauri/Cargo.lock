@@ -2886,6 +2886,7 @@ name = "tauri-app"
 version = "0.0.0"
 dependencies = [
  "arboard",
+ "lazy_static",
  "serde",
  "serde_json",
  "sprintf",

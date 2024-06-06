@@ -2,10 +2,9 @@
 // This starter template is using Vue 3 <script setup> SFCs
 // Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
 import { onMounted } from "vue";
-import Greet from "./components/Greet.vue";
-
 // When using the Tauri API npm package:
 import { invoke } from '@tauri-apps/api/tauri'
+import PinCode from "./components/PinCode.vue";
 // When using the Tauri global script (if not using the npm package)
 // Be sure to set `build.withGlobalTauri` in `tauri.conf.json` to true
 
@@ -20,23 +19,12 @@ onMounted(()=>{
 
 <template>
   <div class="container">
-    <h1>Welcome to Tauri!</h1>
+    <h1>Welcome to QuickPaste!</h1>
 
     <div class="row">
-      <a href="https://vitejs.dev" target="_blank">
-        <img src="/vite.svg" class="logo vite" alt="Vite logo" />
-      </a>
-      <a href="https://tauri.app" target="_blank">
-        <img src="/tauri.svg" class="logo tauri" alt="Tauri logo" />
-      </a>
-      <a href="https://vuejs.org/" target="_blank">
-        <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-      </a>
+      <img src="/qp.svg" class="logo quickPaste" alt="quickPaste logo" />
     </div>
-
-    <p>Click on the Tauri, Vite, and Vue logos to learn more.</p>
-
-    <Greet />
+    <PinCode />
   </div>
 </template>
 

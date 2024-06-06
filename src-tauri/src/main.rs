@@ -1,6 +1,9 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+#[macro_use]
+extern crate lazy_static;
+
 extern crate arboard;
 
 use arboard::Clipboard;
@@ -17,6 +20,7 @@ use serde_json::Value;
 
 #[derive(Serialize, Deserialize)]
 struct UdpMessage {
+    msg_pincode: String,
     msg_from: String, // mac addr or host name
     msg_type: String,
     msg_content: String
@@ -24,18 +28,23 @@ struct UdpMessage {
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+fn set_pincode(code: &str) -> String {
+    let mut pincode_record = PINCODE.lock().unwrap();
+    println!("get pincode , {}!", code);
+    *pincode_record = code.to_string();
+    std::mem::drop(pincode_record);
 
-#[tauri::command]
-fn my_custom_command() -> String {
-    println!("I was invoked from JS!");
-    format!("Hello, vue")
+    // todo: check if have to clear clipboard record after set pincode
+    format!("done!")
 }
 
 // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
 const BROADCAST_PORT: u16 = 28996;
+
+// 使用lazy_static!创建全局变量
+lazy_static! {
+    static ref PINCODE: Arc<Mutex<String>> = Arc::new(Mutex::new(String::from("")));
+}
 
 fn listen_for_packets(socket: UdpSocket, record: Arc<Mutex<String>>) {
     // let sleep_time = time::Duration::from_millis(1000);
@@ -46,22 +55,28 @@ fn listen_for_packets(socket: UdpSocket, record: Arc<Mutex<String>>) {
         let mut buf = [0; 1024];
         // hang if no message
         match socket.recv_from(&mut buf) {
-            Ok((num_bytes, src)) => {
+            Ok((num_bytes, _src)) => {
                 let message = String::from_utf8_lossy(&buf[..num_bytes]);
 
                 match serde_json::from_str::<UdpMessage>(&message) {
                     Ok(msg) => {
-                        println!("from: {}, type: {}, content{}", msg.msg_from, msg.msg_type, msg.msg_content);
+                        println!("from: {}, type: {}, content: {}, pincode: {}", msg.msg_from, msg.msg_type, msg.msg_content, msg.msg_pincode);
                         let mut clipboard_content_record = record.lock().unwrap();
-                        if(format!("{}", msg.msg_content) != format!("{}", clipboard_content_record)) {
+                        let mut pincode_record = PINCODE.lock().unwrap();
+
+                        if(format!("{}", msg.msg_content) != format!("{}", clipboard_content_record) && format!("{}", msg.msg_pincode) != format!("{}", pincode_record)) {
+                            // change record first avoid double trig in roll thread
+                            *clipboard_content_record = msg.msg_content.clone();
                             clipboard_paste.set_text(msg.msg_content).unwrap();
                         } else {
-                            println!("same content. ignore: {}", msg.msg_content);
+                            println!("same content or pin code not match. ignore: {}, {}", msg.msg_content, msg.msg_content);
                         }
+                        // release
+                        std::mem::drop(clipboard_content_record);
+                        std::mem::drop(pincode_record);
                     },
                     Err(e) => println!("Failed to deserialize JSON: {}", e),
                 }
-                
             },
             Err(e) => {
                 eprintln!("Error receiving packet: {}", e);
@@ -75,11 +90,20 @@ fn listen_for_packets(socket: UdpSocket, record: Arc<Mutex<String>>) {
 fn broadcast_message(socket: &UdpSocket, content: String) {
     let destination_addr = (Ipv4Addr::BROADCAST, BROADCAST_PORT);
     // let bytes_to_send = BROADCAST_MESSAGE.as_bytes();
+    let mut pincode_record = PINCODE.lock().unwrap();
+
+    if pincode_record.len() != 4 {
+        println!("pincode not set, skip!");
+    }
+
     let msg = UdpMessage{
+        msg_pincode: pincode_record.to_string(),
         msg_from: String::from("xxx"),
         msg_type: String::from("xxx"),
         msg_content: content.to_string()
     };
+    std::mem::drop(pincode_record);
+
     let msg_serialized = serde_json::to_string(&msg).unwrap();
 
     let msg_bytes = msg_serialized.as_bytes();
@@ -110,6 +134,8 @@ fn poll_clipboard(socket: UdpSocket, record: Arc<Mutex<String>>,) {
             println!("new conent! emit it:{}", clipboard_content_new);
             broadcast_message(&socket, clipboard_content_new);
         }
+        // release
+        std::mem::drop(clipboard_content_record);
 
     }
 }
@@ -137,8 +163,7 @@ fn main() {
     });
 
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet])
-        .invoke_handler(tauri::generate_handler![my_custom_command])
+        .invoke_handler(tauri::generate_handler![set_pincode])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");    
     
