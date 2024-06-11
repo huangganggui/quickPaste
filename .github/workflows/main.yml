@@ -70,26 +70,13 @@ jobs:
           prerelease: false
           args: ${{ matrix.settings.args }}
 
-      # - name: Downlod Artifacts 
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     path: src-tauri/target/ # or path/to/artifact
-      - run: mkdir -p path/to/artifact
-      - run: echo hello > path/to/artifact/world.txt
-      - uses: actions/upload-artifact@v4
+      - if: matrix.settings.platform == 'macos-latest' && matrix.settings.args == '--target aarch64-apple-darwin'
+        name: "Uploading macos aarch64"
+        uses: actions/upload-artifact@v4
         with:
-          name:  ${{ matrix.settings.platform }}test
-          path: path/to/artifact/world.txt
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name:  ${{ matrix.settings.platform }}test2
-          path: path/to/artifact/ # or path/to/artifact
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name:  ${{ matrix.settings.platform }}test3
+          name: ${{ matrix.settings.platform }}_aarch64
           path: src-tauri/target/ # or path/to/artifact
+          overwrite: true
 
       - name: List Files
         run: ls -R
