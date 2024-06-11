@@ -80,5 +80,13 @@ jobs:
         with:
           path: path/to/artifact/world.txt
 
+      - uses: actions/upload-artifact@v4
+        with:
+          path: path/to/artifact/ # or path/to/artifact
+
+      - uses: actions/upload-artifact@v4
+        with:
+          path: src-tauri/target/ # or path/to/artifact
+
       - name: List Files
         run: ls -R
