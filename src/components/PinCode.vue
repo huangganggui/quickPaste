@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { invoke } from "@tauri-apps/api/tauri";
 import VuePincodeInput from 'vue3-pincode-input';
 import { ElMessage } from 'element-plus'
@@ -7,7 +7,7 @@ import { ElMessage } from 'element-plus'
 
 const greetMsg = ref("");
 const name = ref("");
-const code = ref("");
+const code = ref(localStorage.getItem("QuickPastePincode")||"");
 
 
 async function greet() {
@@ -19,17 +19,26 @@ async function greet() {
 
 async function setPincode() {
   // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
+  if (code.value.length !== 4) {
+    ElMessage({
+      message: 'Pincode length error',
+      type: 'error',
+    })
+    return
+  }
+
+  // console.log(code.value)
+  await invoke("set_pincode", { code: code.value });
   ElMessage({
     message: 'Clipboard Sharing.',
     type: 'success',
   })
-  console.log(code.value)
-
-  let result = await invoke("set_pincode", { code: code.value });
-  console.log(result)
-
-  
 }
+
+onMounted(()=>{
+  
+})
+
 </script>
 
 <template>
