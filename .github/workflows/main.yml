@@ -72,6 +72,9 @@ jobs:
 
       - name: Downlod Artifacts 
         uses: actions/download-artifact@v3
+          with:
+            name: my-artifact
+            path: src-tauri/target/ # or path/to/artifact
 
       - name: List Files
         run: ls -R
