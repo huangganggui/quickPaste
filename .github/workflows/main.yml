@@ -55,11 +55,6 @@ jobs:
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
         run: npm install # change this to npm or pnpm depending on which one you use.
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v2
-        with:
-          path: ./
-
       # - name: install @tauri-apps/cli-win32-x64-msvc(windows only)
       #   if: matrix.settings.platform == 'windows-latest' # This must match the platform value defined above.
       #   run: npm install @tauri-apps/cli-win32-x64-msvc @rollup/rollup-win32-x64-msvc
@@ -74,4 +69,13 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.settings.args }}
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: my-artifact
+        path: ./
+
+    - name: Display structure of downloaded files
+      run: ls -R ./
+
             
