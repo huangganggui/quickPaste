@@ -78,14 +78,17 @@ jobs:
       - run: echo hello > path/to/artifact/world.txt
       - uses: actions/upload-artifact@v4
         with:
+          name:  ${{ matrix.settings.platform }}test
           path: path/to/artifact/world.txt
 
       - uses: actions/upload-artifact@v4
         with:
+          name:  ${{ matrix.settings.platform }}test2
           path: path/to/artifact/ # or path/to/artifact
 
       - uses: actions/upload-artifact@v4
         with:
+          name:  ${{ matrix.settings.platform }}test3
           path: src-tauri/target/ # or path/to/artifact
 
       - name: List Files
