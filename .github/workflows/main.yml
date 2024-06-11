@@ -71,7 +71,7 @@ jobs:
           args: ${{ matrix.settings.args }}
 
       - name: Downlod Artifacts 
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: src-tauri/target/ # or path/to/artifact
 
