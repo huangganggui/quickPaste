@@ -8,6 +8,6 @@ Designed to quickly operations like paste among mac/win/Linux. It is supported t
 
 # Development
 ```
-npm install
+yarn install
 npm run tauri dev
 ```
