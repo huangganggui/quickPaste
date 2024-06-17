@@ -18,6 +18,9 @@ use std::sync::{Mutex, Arc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use network_interface::NetworkInterface;
+use network_interface::NetworkInterfaceConfig;
+
 #[derive(Serialize, Deserialize)]
 struct UdpMessage {
     msg_pincode: String,
@@ -88,12 +91,12 @@ fn listen_for_packets(socket: UdpSocket, record: Arc<Mutex<String>>) {
 }
 
 fn broadcast_message(socket: &UdpSocket, content: String) {
-    let destination_addr = (Ipv4Addr::BROADCAST, BROADCAST_PORT);
     // let bytes_to_send = BROADCAST_MESSAGE.as_bytes();
     let mut pincode_record = PINCODE.lock().unwrap();
 
     if pincode_record.len() != 4 {
         println!("pincode not set, skip!");
+        return
     }
 
     let msg = UdpMessage{
@@ -107,11 +110,20 @@ fn broadcast_message(socket: &UdpSocket, content: String) {
     let msg_serialized = serde_json::to_string(&msg).unwrap();
 
     let msg_bytes = msg_serialized.as_bytes();
-    
-    if let Err(e) = socket.send_to(msg_bytes, destination_addr) {
-        eprintln!("Error sending packet: {}", e);
-    } else {
-        // println!("Broadcasted '{}' successfully!", content);
+
+    let network_interfaces = NetworkInterface::show().unwrap();
+
+    for itf in network_interfaces.iter() {
+        if (itf.addr[0].broadcast() != None) {
+            // println!("{:?}", itf.addr[0].broadcast().unwrap());
+            let destination_addr = (itf.addr[0].broadcast().unwrap(), BROADCAST_PORT);
+
+            if let Err(e) = socket.send_to(msg_bytes, destination_addr) {
+                eprintln!("Error sending packet: {}", e);
+            } else {
+                // println!("Broadcasted '{}' successfully!", content);
+            }
+        }
     }
 }
 
