@@ -116,7 +116,7 @@ fn broadcast_message(socket: &UdpSocket, content: String) {
 
     for itf in network_interfaces.iter() {
         if (itf.addr[0].broadcast() != None) {
-            // println!("{:?}", itf.addr[0].broadcast().unwrap());
+            println!("{:?}", itf.addr[0].broadcast().unwrap());
             let destination_addr = (itf.addr[0].broadcast().unwrap(), BROADCAST_PORT);
 
             if let Err(e) = socket.send_to(msg_bytes, destination_addr) {
