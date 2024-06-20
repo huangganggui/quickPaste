@@ -67,9 +67,10 @@ fn listen_for_packets(socket: UdpSocket, record: Arc<Mutex<String>>) {
                         let mut clipboard_content_record = record.lock().unwrap();
                         let mut pincode_record = PINCODE.lock().unwrap();
 
-                        if(format!("{}", msg.msg_content) != format!("{}", clipboard_content_record) && format!("{}", msg.msg_pincode) != format!("{}", pincode_record)) {
+                        if(format!("{}", msg.msg_content) != format!("{}", clipboard_content_record) && format!("{}", msg.msg_pincode) == format!("{}", pincode_record)) {
                             // change record first avoid double trig in roll thread
                             *clipboard_content_record = msg.msg_content.clone();
+                            println!("write to clipboard:{}", msg.msg_content);
                             clipboard_paste.set_text(msg.msg_content).unwrap();
                         } else {
                             println!("same content or pin code not match. ignore: {}, {}", msg.msg_content, msg.msg_content);
