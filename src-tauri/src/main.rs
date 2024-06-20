@@ -114,16 +114,18 @@ fn broadcast_message(socket: &UdpSocket, content: String) {
 
     let network_interfaces = NetworkInterface::show().unwrap();
 
+    // interface
     for itf in network_interfaces.iter() {
-        println!("{:?}", itf);
-        if (itf.addr[0].broadcast() != None) {
-            println!("{:?}", itf.addr[0].broadcast().unwrap());
-            let destination_addr = (itf.addr[0].broadcast().unwrap(), BROADCAST_PORT);
-
-            if let Err(e) = socket.send_to(msg_bytes, destination_addr) {
-                eprintln!("Error sending packet: {}", e);
-            } else {
-                // println!("Broadcasted '{}' successfully!", content);
+        // v4 and v6
+        for addr in &itf.addr {
+            if (addr.broadcast() != None) {
+                // println!("{:?}", addr.broadcast().unwrap());
+                let destination_addr = (addr.broadcast().unwrap(), BROADCAST_PORT);
+                if let Err(e) = socket.send_to(msg_bytes, destination_addr) {
+                    eprintln!("Error sending packet: {}", e);
+                } else {
+                    // println!("Broadcasted '{}' successfully!", content);
+                }
             }
         }
     }
