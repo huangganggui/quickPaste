@@ -115,6 +115,7 @@ fn broadcast_message(socket: &UdpSocket, content: String) {
     let network_interfaces = NetworkInterface::show().unwrap();
 
     for itf in network_interfaces.iter() {
+        println!("{:?}", itf);
         if (itf.addr[0].broadcast() != None) {
             println!("{:?}", itf.addr[0].broadcast().unwrap());
             let destination_addr = (itf.addr[0].broadcast().unwrap(), BROADCAST_PORT);
