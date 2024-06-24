@@ -91,7 +91,7 @@ jobs:
           WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
           WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
         run: |
-          C:\"Program Files (x86)"\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe sign /f certificate/certificate.pfx /p (ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText) /fd SHA256 .\src-tauri\target\release\*.exe
+          C:\"Program Files (x86)"\"Windows Kits"\10\bin\10.0.22621.0\x64\signtool.exe sign /f certificate/certificate.pfx /p (ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText) /fd SHA256 .\src-tauri\target\release\*.exe
 
       # upload
       - name: "Uploading file"
