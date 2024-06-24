@@ -83,6 +83,15 @@ jobs:
           releaseDraft: true
           prerelease: true
           args: ${{ matrix.settings.args }}
+      
+      # sign
+      - name: sign
+        if: matrix.settings.platform == 'windows-latest'
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          signtool sign /f certificate/certificate.pfx /p (ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText) /fd SHA256 .\src-tauri\target\release\*.exe
 
       # upload
       - name: "Uploading file"
