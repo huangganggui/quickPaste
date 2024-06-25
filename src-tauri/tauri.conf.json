@@ -37,7 +37,12 @@
         "icons/128x128@2x.png",
         "icons/icon.icns",
         "icons/icon.ico"
-      ]
+      ],
+      "windows": {
+        "certificateThumbprint": "378AD528CAEF7C62D0DA001B6F55FC7AEBD6AE75",
+        "digestAlgorithm": "sha256",
+        "timestampUrl": "http://timestamp.comodoca.com"
+      }
     }
   }
 }
